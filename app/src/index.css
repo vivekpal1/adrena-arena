@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-arena-bg text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-arena-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-arena-border rounded-full;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-arena-surface border border-arena-border rounded-xl p-6;
+  }
+
+  .btn-primary {
+    @apply bg-arena-accent hover:bg-arena-accent-dim text-white font-medium
+           px-4 py-2 rounded-lg transition-colors duration-150;
+  }
+
+  .btn-secondary {
+    @apply bg-arena-surface border border-arena-border hover:border-arena-accent
+           text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150;
+  }
+
+  .tier-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider;
+  }
+
+  .tier-iron { @apply bg-arena-iron/20 text-arena-iron; }
+  .tier-bronze { @apply bg-arena-bronze/20 text-arena-bronze; }
+  .tier-silver { @apply bg-arena-silver/20 text-arena-silver; }
+  .tier-gold { @apply bg-arena-gold/20 text-arena-gold; }
+  .tier-diamond { @apply bg-arena-diamond/20 text-arena-diamond; }
+}

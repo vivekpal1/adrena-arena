@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id              String   @id @default(cuid())
+  walletAddress   String   @unique
+  currentTier     Int      @default(0) // LeagueTier enum
+  leagueScore     BigInt   @default(0)
+  championshipPts Int      @default(0)
+  totalMutagen    BigInt   @default(0)
+  weeklyMutagen   BigInt   @default(0)
+  streakDays      Int      @default(0)
+  squadId         String?
+  antiGamingScore Float    @default(0)
+  status          Int      @default(0) // PlayerStatus enum
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  squad       Squad?         @relation(fields: [squadId], references: [id])
+  trades      TradeEvent[]
+  snapshots   LeagueSnapshot[]
+  flags       AntiGamingFlag[]
+
+  @@index([currentTier])
+  @@index([walletAddress])
+}
+
+model Agent {
+  id               String   @id @default(cuid())
+  operatorWallet   String
+  agentWallet      String   @unique
+  agentClass       Int      // AgentClass enum
+  strategyCategory String
+  stakeAmount      BigInt   @default(0)
+  cumulativePnl    BigInt   @default(0)
+  sharpeRatio      Float    @default(0)
+  maxDrawdown      BigInt   @default(0)
+  tradeCount       Int      @default(0)
+  winRate          Float    @default(0)
+  feeEfficiency    Float    @default(0)
+  totalCompetitions Int     @default(0)
+  wins             Int      @default(0)
+  isActive         Boolean  @default(true)
+  status           Int      @default(0) // AgentStatus enum
+  registeredAt     DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  trades           TradeEvent[]
+
+  @@index([agentWallet])
+  @@index([operatorWallet])
+}
+
+model TradeEvent {
+  id            String   @id @default(cuid())
+  walletAddress String
+  market        String   // e.g. "BTC-PERP", "SOL-PERP"
+  side          String   // "long" or "short"
+  size          BigInt   // Position size in USD (6 decimals)
+  entryPrice    BigInt   // 6 decimal fixed-point
+  exitPrice     BigInt?  // null if position still open
+  pnl           BigInt?  // Realized PnL
+  fees          BigInt   @default(0)
+  leverage      Int
+  duration      Int?     // seconds
+  mutagenEarned BigInt   @default(0)
+  openedAt      DateTime
+  closedAt      DateTime?
+  txSignature   String   @unique
+  season        Int
+  week          Int
+  isAgentTrade  Boolean  @default(false)
+
+  player        Player?  @relation(fields: [walletAddress], references: [walletAddress])
+  agent         Agent?   @relation(fields: [walletAddress], references: [agentWallet])
+
+  @@index([walletAddress, season, week])
+  @@index([openedAt])
+  @@index([market])
+}
+
+model LeagueSnapshot {
+  id            String   @id @default(cuid())
+  playerId      String
+  season        Int
+  week          Int
+  tier          Int
+  leagueScore   BigInt
+  rank          Int
+  mutagen       BigInt
+  pnl           BigInt
+  maxDrawdown   BigInt
+  trades        Int
+  activeDays    Int
+  promoted      Boolean  @default(false)
+  relegated     Boolean  @default(false)
+  champPts      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  player        Player   @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, season, week])
+  @@index([season, week, tier])
+}
+
+model TournamentRecord {
+  id              String   @id @default(cuid())
+  tournamentId    Int
+  format          Int      // TournamentFormat enum
+  bracketSize     Int
+  status          Int      // TournamentStatus enum
+  prizePool       BigInt   @default(0)
+  entryFee        BigInt   @default(0)
+  winnerId        String?
+  participants    Json     // Array of wallet addresses
+  bracketState    Json     // Full bracket state for frontend rendering
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  rounds          TournamentRound[]
+
+  @@index([tournamentId])
+}
+
+model TournamentRound {
+  id              String   @id @default(cuid())
+  tournamentId    String
+  roundNumber     Int
+  matchups        Json     // Array of { playerA, playerB, scoreA, scoreB, winner }
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  tournament      TournamentRecord @relation(fields: [tournamentId], references: [id])
+
+  @@unique([tournamentId, roundNumber])
+}
+
+model AntiGamingFlag {
+  id            String   @id @default(cuid())
+  walletAddress String
+  flagType      String   // "wash_trade", "sybil", "collusion", "oracle_manip", "size_gaming"
+  severity      Float    // 0-1, higher = more severe
+  evidence      Json     // Detailed evidence for human review
+  resolved      Boolean  @default(false)
+  resolution    String?  // "cleared", "penalty", "disqualified"
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
+
+  player        Player?  @relation(fields: [walletAddress], references: [walletAddress])
+
+  @@index([walletAddress])
+  @@index([flagType, resolved])
+}
+
+model SquadRecord {
+  id            String   @id @default(cuid())
+  onChainKey    String   @unique
+  name          String
+  leaderWallet  String
+  memberCount   Int      @default(0)
+  weeklyScore   BigInt   @default(0)
+  totalMutagen  BigInt   @default(0)
+  tier          Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([leaderWallet])
+}
+
+model Squad {
+  id            String   @id @default(cuid())
+  onChainKey    String   @unique
+  name          String
+  leaderWallet  String
+  createdAt     DateTime @default(now())
+
+  members       Player[]
+
+  @@index([name])
+}

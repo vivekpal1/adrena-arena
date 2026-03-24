@@ -1,0 +1,15 @@
+{
+  "name": "adrena-arena",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trading competition module for Adrena Protocol x Autonom",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev": "pnpm --filter app dev",
+    "engine:dev": "pnpm --filter competition-engine dev",
+    "lint": "pnpm -r lint"
+  },
+  "keywords": ["solana", "adrena", "trading", "competition", "ai-agents"],
+  "license": "MIT"
+}
