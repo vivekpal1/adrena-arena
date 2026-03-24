@@ -1,6 +1,6 @@
 # Testing Report
 
-> **Deliverable 3** — Superteam Bounty: Adrena x Autonom Trading Competition Design & Development
+> **Deliverable 3**: Superteam Bounty: Adrena x Autonom Trading Competition Design & Development
 
 ---
 

@@ -14,70 +14,35 @@ Adrena Arena transforms Adrena Protocol from a trading platform into a **competi
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (React)                       │
-│              Vite + Tailwind + Wallet Adapter             │
-└─────────────────┬───────────────────┬───────────────────┘
-                  │ REST/WS           │ RPC
-┌─────────────────▼───────────────┐  │
-│      Competition Engine          │  │
-│  Express + Prisma + Redis + Bull │  │
-│  ┌──────┐ ┌──────┐ ┌──────────┐│  │
-│  │Score │ │Lead- │ │Anti-     ││  │
-│  │Engine│ │board │ │Gaming    ││  │
-│  └──────┘ └──────┘ └──────────┘│  │
-└─────────────────┬───────────────┘  │
-                  │ Crank TXs        │
-┌─────────────────▼───────────────────▼───────────────────┐
-│                Solana (Devnet/Mainnet)                    │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │           Adrena Arena Program (Anchor)           │   │
-│  │  CompetitionState · PlayerProfile · AgentReg      │   │
-│  │  Squad · Tournament · TournamentBracket           │   │
-│  └──────────────────────────────────────────────────┘   │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │           Adrena Protocol (read-only)             │   │
-│  │  UserProfile · Position · Pool · Custody          │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
+```mermaid
+flowchart LR
+    subgraph Frontend ["Frontend (React)"]
+        FE["Vite + Tailwind<br/>Wallet Adapter"]
+    end
 
-## Project Structure
+    subgraph Engine ["Competition Engine"]
+        CE["Express + Prisma<br/>Redis + Bull"]
+        SE["Score Engine"]
+        LB["Leaderboard"]
+        AG["Anti-Gaming"]
+        CE --- SE
+        CE --- LB
+        CE --- AG
+    end
 
-```
-adrena-arena/
-├── DESIGN.md                    # Competition Design Document (Deliverable 1)
-├── ARCHITECTURE.md              # Technical architecture details
-├── programs/adrena-arena/       # Solana program (Anchor/Rust)
-│   └── src/
-│       ├── lib.rs               # Program entrypoint (14 instructions)
-│       ├── state/               # Account structures (6 accounts)
-│       ├── instructions/        # Instruction handlers
-│       ├── errors.rs            # Custom error codes
-│       └── constants.rs         # Constants and config
-├── sdk/                         # TypeScript SDK
-│   └── src/
-│       ├── client.ts            # AdrenaArenaClient class
-│       ├── pda.ts               # PDA derivation helpers
-│       ├── types/               # TypeScript type definitions
-│       └── constants.ts         # SDK constants
-├── app/                         # Frontend (Vite + React + Tailwind)
-│   └── src/
-│       ├── pages/               # Dashboard, Leagues, Agents, Tournaments, Profile
-│       └── components/          # BracketVisualizer, LeaderboardTable, TierBadge
-├── services/
-│   ├── competition-engine/      # Scoring, leaderboards, crank jobs
-│   │   ├── prisma/              # Database schema
-│   │   └── src/
-│   │       ├── scoring/         # Mutagen, League, Agent scorers
-│   │       ├── leaderboard/     # Redis-backed leaderboards
-│   │       └── crank/           # Weekly promotion/relegation
-│   └── anti-gaming/             # Wash trade, sybil, collusion detection
-│       └── src/detectors/
-├── docs/
-│   └── TESTING_REPORT.md        # Testing results (Deliverable 3)
-└── scripts/
+    subgraph Solana ["Solana (Devnet/Mainnet)"]
+        subgraph Program ["Adrena Arena Program (Anchor)"]
+            P1["CompetitionState · PlayerProfile · AgentReg<br/>Squad · Tournament · TournamentBracket"]
+        end
+        subgraph Protocol ["Adrena Protocol (read-only)"]
+            PR1["UserProfile · Position · Pool · Custody"]
+        end
+        Program -.-> Protocol
+    end
+
+    Frontend -- "REST/WS" --> Engine
+    Frontend -- "RPC" --> Solana
+    Engine -- "Crank TXs" --> Solana
 ```
 
 ## Quick Start
